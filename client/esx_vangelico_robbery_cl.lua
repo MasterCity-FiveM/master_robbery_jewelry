@@ -57,7 +57,6 @@ function DrawText3D(x, y, z, text, scale)
 
 	AddTextComponentString(text)
 	DrawText(_x, _y)
-
 end
 
 local underdisplaymessage = false
@@ -79,14 +78,14 @@ function loadAnimDict(dict)
     end
 end 
 
-RegisterNetEvent('esx_vangelico_robbery:currentlyrobbing')
-AddEventHandler('esx_vangelico_robbery:currentlyrobbing', function(robb)
+RegisterNetEvent('master_robbery_jewelry:currentlyrobbing')
+AddEventHandler('master_robbery_jewelry:currentlyrobbing', function(robb)
 	holdingup = true
 	store = robb
 end)
 
-RegisterNetEvent('esx_vangelico_robbery:robberycomplete')
-AddEventHandler('esx_vangelico_robbery:robberycomplete', function(robb)
+RegisterNetEvent('master_robbery_jewelry:robberycomplete')
+AddEventHandler('master_robbery_jewelry:robberycomplete', function(robb)
 	holdingup = false
 	robbingName = ""
 	incircle = false
@@ -110,8 +109,8 @@ function drawTxt(x, y, scale, text, red, green, blue, alpha)
     DrawText(0.175, 0.935)
 end
 
-RegisterNetEvent('esx_vangelico_robbery:msgPolice')
-AddEventHandler('esx_vangelico_robbery:msgPolice', function(messagetype)
+RegisterNetEvent('master_robbery_jewelry:msgPolice')
+AddEventHandler('master_robbery_jewelry:msgPolice', function(messagetype)
 	local playerPed = PlayerPedId()
 	PedPosition		= GetEntityCoords(playerPed)
 	local PlayerCoords = { x = PedPosition.x, y = PedPosition.y, z = PedPosition.z }
@@ -151,7 +150,7 @@ Citizen.CreateThread(function()
 							if IsPedShooting(GetPlayerPed(-1)) then
 								local canRob = nil
 								
-								ESX.TriggerServerCallback('esx_vangelico_robbery:canRob', function(cb)
+								ESX.TriggerServerCallback('master_robbery_jewelry:canRob', function(cb)
 									canRob = cb
 								end, k)
 								
@@ -175,7 +174,7 @@ Citizen.CreateThread(function()
 									end
 									
 									if hasBag == true then
-										 TriggerServerEvent('esx_vangelico_robbery:rob', k)
+										 TriggerServerEvent('master_robbery_jewelry:rob', k)
 										 PlaySoundFromCoord(soundid, "VEHICLES_HORNS_AMBULANCE_WARNING", pos2.x, pos2.y, pos2.z)
 									else 
 										exports.pNotify:SendNotification({text = "برو کیف بیار بابا، مگه فیلم هندیه؟!", type = "error", timeout = 4000})
@@ -236,7 +235,7 @@ Citizen.CreateThread(function()
 									v.isOpen = false
 									vetrineRotte = 0
 								end
-								TriggerServerEvent('esx_vangelico_robbery:endrob', store)
+								TriggerServerEvent('master_robbery_jewelry:endrob', store)
 								holdingup = false
 								StopSound(soundid)
 							end
@@ -246,7 +245,7 @@ Citizen.CreateThread(function()
 
 				local pos2 = Stores[store].position
 				if (GetDistanceBetweenCoords(GetEntityCoords(GetPlayerPed(-1)), -622.566, -230.183, 38.057, true) > 11.5 ) then
-					TriggerServerEvent('esx_vangelico_robbery:toofar', store)
+					TriggerServerEvent('master_robbery_jewelry:toofar', store)
 					holdingup = false
 					for i,v in pairs(vetrine) do 
 						v.isOpen = false
