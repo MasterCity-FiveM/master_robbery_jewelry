@@ -1,6 +1,5 @@
 local holdingup = false
 local store = ""
-local blipRobbery = nil
 local vetrineRotte = 0 
 
 local vetrine = {
@@ -52,10 +51,16 @@ function DrawText3D(x, y, z, text, scale)
 
 end
 
+local underdisplaymessage = false
 function DisplayHelpText(str)
-	SetTextComponentFormat("STRING")
-	AddTextComponentString(str)
-	DisplayHelpTextFromStringLabel(0, 0, 1, -1)
+	if not underdisplaymessage then
+		Citizen.CreateThread(function() 
+			underdisplaymessage = true
+			exports.pNotify:SendNotification({text = str, type = "info", timeout = 3000})	
+			Citizen.Wait(3200)
+			underdisplaymessage = false
+		end)
+	end
 end
 
 RegisterNetEvent("mt:missiontext")
@@ -79,34 +84,10 @@ AddEventHandler('esx_vangelico_robbery:currentlyrobbing', function(robb)
 	store = robb
 end)
 
-RegisterNetEvent('esx_vangelico_robbery:killblip')
-AddEventHandler('esx_vangelico_robbery:killblip', function()
-    RemoveBlip(blipRobbery)
-end)
-
-RegisterNetEvent('esx_vangelico_robbery:setblip')
-AddEventHandler('esx_vangelico_robbery:setblip', function(position)
-    blipRobbery = AddBlipForCoord(position.x, position.y, position.z)
-    SetBlipSprite(blipRobbery , 161)
-    SetBlipScale(blipRobbery , 2.0)
-    SetBlipColour(blipRobbery, 3)
-    PulseBlip(blipRobbery)
-end)
-
-RegisterNetEvent('esx_vangelico_robbery:toofarlocal')
-AddEventHandler('esx_vangelico_robbery:toofarlocal', function(robb)
-	holdingup = false
-	ESX.ShowNotification(_U('robbery_cancelled'))
-	robbingName = ""
-	incircle = false
-end)
-
-
 RegisterNetEvent('esx_vangelico_robbery:robberycomplete')
 AddEventHandler('esx_vangelico_robbery:robberycomplete', function(robb)
 	holdingup = false
-	ESX.ShowNotification(_U('robbery_complete'))
-	store = ""
+	robbingName = ""
 	incircle = false
 end)
 
@@ -131,7 +112,7 @@ soundid = GetSoundId()
 function drawTxt(x, y, scale, text, red, green, blue, alpha)
 	SetTextFont(4)
 	SetTextProportional(1)
-	SetTextScale(0.64, 0.64)
+	SetTextScale(0.44, 0.44)
 	SetTextColour(red, green, blue, alpha)
 	SetTextDropShadow(0, 0, 0, 0, 255)
 	SetTextEdge(1, 0, 0, 0, 255)
@@ -139,27 +120,35 @@ function drawTxt(x, y, scale, text, red, green, blue, alpha)
 	SetTextOutline()
 	SetTextEntry("STRING")
 	AddTextComponentString(text)
-    DrawText(0.155, 0.935)
+    DrawText(0.175, 0.935)
 end
 
-local borsa = nil
-
-Citizen.CreateThread(function()
-	while true do
-	  Citizen.Wait(1000)
-	  TriggerEvent('skinchanger:getSkin', function(skin)
-		borsa = skin['bags_1']
-	  end)
-	  Citizen.Wait(1000)
+RegisterNetEvent('esx_vangelico_robbery:msgPolice')
+AddEventHandler('esx_vangelico_robbery:msgPolice', function(messagetype)
+	local playerPed = PlayerPedId()
+	PedPosition		= GetEntityCoords(playerPed)
+	local PlayerCoords = { x = PedPosition.x, y = PedPosition.y, z = PedPosition.z }
+	
+	message1 = "شما از دزدی منصرف شدید!"
+	message2 = 'سارق از دزدی منصرف شد!'
+	
+	if messagetype == 'start' then
+		message1 = "سیستم های امنیتی، گزارش دزدی شما را برای پلیس ارسال کرده، عجله کنید!"
+		message2 = 'دزدی از جواهری گزارش شده است!'
 	end
+	
+	exports.pNotify:SendNotification({text = message1, type = "error", timeout = 4000})
+
+    TriggerServerEvent('esx_addons_gcphone:startCall', 'police', message2, PlayerCoords, {
+		PlayerCoords = { x = PedPosition.x, y = PedPosition.y, z = PedPosition.z },
+	})
 end)
 
 Citizen.CreateThread(function()
-      
 	while true do
 		local pos = GetEntityCoords(GetPlayerPed(-1), true)
 
-		for k,v in pairs(Stores)do
+		for k,v in pairs(Stores) do
 			local pos2 = v.position
 
 			if(Vdist(pos.x, pos.y, pos.z, pos2.x, pos2.y, pos2.z) < 15.0)then
@@ -172,29 +161,45 @@ Citizen.CreateThread(function()
 						end
 						incircle = true
 						if IsPedShooting(GetPlayerPed(-1)) then
-							if Config.NeedBag then
-							    if borsa == 40 or borsa == 41 or borsa == 44 or borsa == 45 then
-							        ESX.TriggerServerCallback('esx_vangelico_robbery:conteggio', function(CopsConnected)
-								        if CopsConnected >= Config.RequiredCopsRob then
-							                TriggerServerEvent('esx_vangelico_robbery:rob', k)
-									        PlaySoundFromCoord(soundid, "VEHICLES_HORNS_AMBULANCE_WARNING", pos2.x, pos2.y, pos2.z)
-								        else
-									        TriggerEvent('esx:showNotification', _U('min_two_police') .. Config.RequiredCopsRob .. _U('min_two_police2'))
-								        end
-							        end)		
-						        else
-							        TriggerEvent('esx:showNotification', _U('need_bag'))
-								end
-							else
-								ESX.TriggerServerCallback('esx_vangelico_robbery:conteggio', function(CopsConnected)
-									if CopsConnected >= Config.RequiredCopsRob then
-										TriggerServerEvent('esx_vangelico_robbery:rob', k)
-										PlaySoundFromCoord(soundid, "VEHICLES_HORNS_AMBULANCE_WARNING", pos2.x, pos2.y, pos2.z)
+							local canRob = nil
+							
+                            ESX.TriggerServerCallback('esx_vangelico_robbery:canRob', function(cb)
+                                canRob = cb
+                            end, k)
+							
+                            while canRob == nil do
+                                Wait(0)
+                            end
+							
+							if canRob == true then
+								local hasBag = nil
+								
+								TriggerEvent('skinchanger:getSkin', function(skin)
+									if skin['bags_1'] ~= nil and (skin['bags_1'] >= 40 and skin['bags_1'] <= 47) then
+										hasBag = true
 									else
-										TriggerEvent('esx:showNotification', _U('min_two_police') .. Config.RequiredCopsRob .. _U('min_two_police2'))
+										hasBag = false
 									end
-								end)	
-							end	
+								end)
+							
+								while hasBag == nil do
+									Wait(0)
+								end
+								
+								if hasBag == true then
+									 TriggerServerEvent('esx_vangelico_robbery:rob', k)
+									 PlaySoundFromCoord(soundid, "VEHICLES_HORNS_AMBULANCE_WARNING", pos2.x, pos2.y, pos2.z)
+								else 
+									exports.pNotify:SendNotification({text = "برو کیف بیار بابا، مگه فیلم هندیه؟!", type = "error", timeout = 4000})
+									Wait(4500)
+								end
+							elseif canRob == 'no_cops' then
+								exports.pNotify:SendNotification({text = "تعداد پلیس ها کم می باشد!", type = "error", timeout = 4000})
+                                Wait(4500)
+                            else
+								exports.pNotify:SendNotification({text = "دیر رسیدی، اینجا خالی شده!", type = "info", timeout = 4000})
+                                Wait(4500)
+                            end
                         end
 					elseif(Vdist(pos.x, pos.y, pos.z, pos2.x, pos2.y, pos2.z) > 1.0)then
 						incircle = false
@@ -213,7 +218,10 @@ Citizen.CreateThread(function()
 				if(GetDistanceBetweenCoords(pos, v.x, v.y, v.z, true) < 0.75) and not v.isOpen then 
 					DrawText3D(v.x, v.y, v.z, '~w~[~g~E~w~] ' .. _U('press_to_collect'), 0.6)
 					if IsControlJustPressed(0, 38) then
+					
 						animazione = true
+						
+
 					    SetEntityCoords(GetPlayerPed(-1), v.x, v.y, v.z-0.95)
 					    SetEntityHeading(GetPlayerPed(-1), v.heading)
 						v.isOpen = true 
@@ -228,12 +236,9 @@ Citizen.CreateThread(function()
 					    StartParticleFxLoopedAtCoord("scr_jewel_cab_smash", v.x, v.y, v.z, 0.0, 0.0, 0.0, 1.0, false, false, false, false)
 					    loadAnimDict( "missheist_jewel" ) 
 						TaskPlayAnim(GetPlayerPed(-1), "missheist_jewel", "smash_case", 8.0, 1.0, -1, 2, 0, 0, 0, 0 ) 
-						TriggerEvent("mt:missiontext", _U('collectinprogress'), 3000)
-					    --DisplayHelpText(_U('collectinprogress'))
-					    DrawSubtitleTimed(5000, 1)
+						exports.pNotify:SendNotification({text = "برداشتن جواهر ...", type = "info", timeout = 4500})
 					    Citizen.Wait(5000)
 					    ClearPedTasksImmediately(GetPlayerPed(-1))
-					    TriggerServerEvent('esx_vangelico_robbery:gioielli')
 					    PlaySound(-1, "PICK_UP", "HUD_FRONTEND_DEFAULT_SOUNDSET", 0, 0, 1)
 					    vetrineRotte = vetrineRotte+1
 					    animazione = false
@@ -244,7 +249,6 @@ Citizen.CreateThread(function()
 								vetrineRotte = 0
 							end
 							TriggerServerEvent('esx_vangelico_robbery:endrob', store)
-						    ESX.ShowNotification(_U('lester'))
 						    holdingup = false
 						    StopSound(soundid)
 						end
@@ -253,7 +257,6 @@ Citizen.CreateThread(function()
 			end
 
 			local pos2 = Stores[store].position
-
 			if (GetDistanceBetweenCoords(GetEntityCoords(GetPlayerPed(-1)), -622.566, -230.183, 38.057, true) > 11.5 ) then
 				TriggerServerEvent('esx_vangelico_robbery:toofar', store)
 				holdingup = false
@@ -263,79 +266,8 @@ Citizen.CreateThread(function()
 				end
 				StopSound(soundid)
 			end
-
 		end
-
 		Citizen.Wait(0)
-	end
-end)
-
-Citizen.CreateThread(function()
-      
-	while true do
-		Wait(1)
-		if animazione == true then
-			if not IsEntityPlayingAnim(PlayerPedId(), 'missheist_jewel', 'smash_case', 3) then
-				TaskPlayAnim(PlayerPedId(), 'missheist_jewel', 'smash_case', 8.0, 8.0, -1, 17, 1, false, false, false)
-			end
-		end
-	end
-end)
-
-RegisterNetEvent("lester:createBlip")
-AddEventHandler("lester:createBlip", function(type, x, y, z)
-	local blip = AddBlipForCoord(x, y, z)
-	SetBlipSprite(blip, type)
-	SetBlipColour(blip, 1)
-	SetBlipScale(blip, 0.8)
-	SetBlipAsShortRange(blip, true)
-	if(type == 77)then
-		BeginTextCommandSetBlipName("STRING")
-		AddTextComponentString("Lester")
-		EndTextCommandSetBlipName(blip)
-	end
-end)
-
-blip = false
-
-Citizen.CreateThread(function()
-	TriggerEvent('lester:createBlip', 77, 706.669, -966.898, 30.413)
-	while true do
-	
-		Citizen.Wait(1)
-	
-			local playerPed = PlayerPedId()
-			local coords    = GetEntityCoords(playerPed)
-			
-			if GetDistanceBetweenCoords(GetEntityCoords(GetPlayerPed(-1)), 706.669, -966.898, 30.413, true) <= 10 and not blip then
-				DrawMarker(20, 706.669, -966.898, 30.413, 0.0, 0.0, 0.0, 0, 0.0, 0.0, 1.5, 1.5, 1.5, 102, 100, 102, 100, false, true, 2, false, false, false, false)
-				if GetDistanceBetweenCoords(coords, 706.669, -966.898, 30.413, true) < 1.0 then
-					DisplayHelpText(_U('press_to_sell'))
-					if IsControlJustReleased(1, 51) then
-						blip = true
-						ESX.TriggerServerCallback('esx_ambulancejob:getItemAmount', function(quantity)
-							if quantity >= Config.MaxJewelsSell then
-								ESX.TriggerServerCallback('esx_vangelico_robbery:conteggio', function(CopsConnected)
-									if CopsConnected >= Config.RequiredCopsSell then
-										FreezeEntityPosition(playerPed, true)
-										TriggerEvent('mt:missiontext', _U('goldsell'), 10000)
-										Wait(10000)
-										FreezeEntityPosition(playerPed, false)
-										TriggerServerEvent('lester:vendita')
-										blip = false
-									else
-										blip = false
-										TriggerEvent('esx:showNotification', _U('copsforsell') .. Config.RequiredCopsSell .. _U('copsforsell2'))
-									end
-								end)
-							else
-								blip = false
-								TriggerEvent('esx:showNotification', _U('notenoughgold'))
-							end
-						end, 'jewels')
-					end
-				end
-			end
 	end
 end)
 

@@ -2,7 +2,7 @@ Locales['en'] = {
 
 	['robbery_cancelled'] = 'the robbery has been cancelled!',
 	['shop_robbery'] = 'Robbery in jewelry',
-	['press_to_rob'] = 'Shoot to start the robbery',
+	['press_to_rob'] = 'سارق محترم، اگه با بچه ها اومدی دزدی، لطفا یه شلیک کن!',
 	['seconds_remaining'] = '~w~ seconds remaining',
 	['robbery_cancelled_at'] = '~r~ robbery has been cancelled at: ~b~',
 	['robbery_has_cancelled'] = '~r~ the robbery has been cancelled: ~b~',
@@ -28,8 +28,8 @@ Locales['en'] = {
 	['collectinprogress'] = 'Jewelery collection in progress...',
 	['lester'] = '~g~You have robbed jewelry! Now bring jewels to ~r~Lester!',
 	['jewelsblipmap'] = 'Jewels',
-	['press_to_collect'] = 'to collect jewels',
-	['smash_case'] = 'broken windows',
+	['press_to_collect'] = 'Bardashtane Javaher',
+	['smash_case'] = 'Javaherate Dozdide Shode',
 	['press_to_sell'] = 'Press ~INPUT_PICKUP~ to sell jewels',
 	['need_bag'] = 'You need the bag! Go to the nearest clotheshop.'
 
