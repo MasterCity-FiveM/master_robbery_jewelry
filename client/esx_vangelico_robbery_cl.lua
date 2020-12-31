@@ -33,7 +33,16 @@ Citizen.CreateThread(function()
 		TriggerEvent('esx:getSharedObject', function(obj) ESX = obj end)
 		Citizen.Wait(0)
 	end
+	
+	while not ESX.GetPlayerData().job do
+		Citizen.Wait(10)
+	end
+
+	ESX.PlayerData = ESX.GetPlayerData()
 end)
+
+RegisterNetEvent('esx:setJob')
+AddEventHandler('esx:setJob', function(job) ESX.PlayerData.job = job end)
 
 function DrawText3D(x, y, z, text, scale)
 	local onScreen, _x, _y = World3dToScreen2d(x, y, z)
@@ -63,18 +72,10 @@ function DisplayHelpText(str)
 	end
 end
 
-RegisterNetEvent("mt:missiontext")
-AddEventHandler("mt:missiontext", function(text, time)
-    ClearPrints()
-    SetTextEntry_2("STRING")
-    AddTextComponentString(text)
-    DrawSubtitleTimed(time, 1)
-end)
-
-function loadAnimDict( dict )  
-    while ( not HasAnimDictLoaded( dict ) ) do
-        RequestAnimDict( dict )
-        Citizen.Wait( 5 )
+function loadAnimDict(dict)  
+    while(not HasAnimDictLoaded(dict)) do
+        RequestAnimDict(dict)
+        Citizen.Wait(5)
     end
 end 
 
@@ -89,20 +90,6 @@ AddEventHandler('esx_vangelico_robbery:robberycomplete', function(robb)
 	holdingup = false
 	robbingName = ""
 	incircle = false
-end)
-
-Citizen.CreateThread(function()
-	for k,v in pairs(Stores)do
-		local ve = v.position
-
-		local blip = AddBlipForCoord(ve.x, ve.y, ve.z)
-		SetBlipSprite(blip, 439)
-		SetBlipScale(blip, 0.8)
-		SetBlipAsShortRange(blip, true)
-		BeginTextCommandSetBlipName("STRING")
-		AddTextComponentString(_U('shop_robbery'))
-		EndTextCommandSetBlipName(blip)
-	end
 end)
 
 animazione = false
@@ -146,128 +133,133 @@ end)
 
 Citizen.CreateThread(function()
 	while true do
-		local pos = GetEntityCoords(GetPlayerPed(-1), true)
+		if not (ESX ~= nil and ESX.PlayerData ~= nil and ESX.PlayerData.job ~= nil and ESX.PlayerData.job.name ~= nil and ESX.PlayerData.job.name == 'police') then
+			local pos = GetEntityCoords(GetPlayerPed(-1), true)
 
-		for k,v in pairs(Stores) do
-			local pos2 = v.position
+			for k,v in pairs(Stores) do
+				local pos2 = v.position
 
-			if(Vdist(pos.x, pos.y, pos.z, pos2.x, pos2.y, pos2.z) < 15.0)then
-				if not holdingup then
-					DrawMarker(27, v.position.x, v.position.y, v.position.z-0.9, 0, 0, 0, 0, 0, 0, 2.001, 2.0001, 0.5001, 255, 0, 0, 200, 0, 0, 0, 0)
+				if(Vdist(pos.x, pos.y, pos.z, pos2.x, pos2.y, pos2.z) < 15.0)then
+					if not holdingup then
+						DrawMarker(27, v.position.x, v.position.y, v.position.z-0.9, 0, 0, 0, 0, 0, 0, 2.001, 2.0001, 0.5001, 255, 0, 0, 200, 0, 0, 0, 0)
 
-					if(Vdist(pos.x, pos.y, pos.z, pos2.x, pos2.y, pos2.z) < 1.0)then
-						if (incircle == false) then
-							DisplayHelpText(_U('press_to_rob'))
-						end
-						incircle = true
-						if IsPedShooting(GetPlayerPed(-1)) then
-							local canRob = nil
-							
-                            ESX.TriggerServerCallback('esx_vangelico_robbery:canRob', function(cb)
-                                canRob = cb
-                            end, k)
-							
-                            while canRob == nil do
-                                Wait(0)
-                            end
-							
-							if canRob == true then
-								local hasBag = nil
+						if(Vdist(pos.x, pos.y, pos.z, pos2.x, pos2.y, pos2.z) < 1.0)then
+							if (incircle == false) then
+								DisplayHelpText(_U('press_to_rob'))
+							end
+							incircle = true
+							if IsPedShooting(GetPlayerPed(-1)) then
+								local canRob = nil
 								
-								TriggerEvent('skinchanger:getSkin', function(skin)
-									if skin['bags_1'] ~= nil and (skin['bags_1'] >= 40 and skin['bags_1'] <= 47) then
-										hasBag = true
-									else
-										hasBag = false
-									end
-								end)
-							
-								while hasBag == nil do
+								ESX.TriggerServerCallback('esx_vangelico_robbery:canRob', function(cb)
+									canRob = cb
+								end, k)
+								
+								while canRob == nil do
 									Wait(0)
 								end
 								
-								if hasBag == true then
-									 TriggerServerEvent('esx_vangelico_robbery:rob', k)
-									 PlaySoundFromCoord(soundid, "VEHICLES_HORNS_AMBULANCE_WARNING", pos2.x, pos2.y, pos2.z)
-								else 
-									exports.pNotify:SendNotification({text = "برو کیف بیار بابا، مگه فیلم هندیه؟!", type = "error", timeout = 4000})
+								if canRob == true then
+									local hasBag = nil
+									
+									TriggerEvent('skinchanger:getSkin', function(skin)
+										if skin['bags_1'] ~= nil and (skin['bags_1'] >= 40 and skin['bags_1'] <= 47) then
+											hasBag = true
+										else
+											hasBag = false
+										end
+									end)
+								
+									while hasBag == nil do
+										Wait(0)
+									end
+									
+									if hasBag == true then
+										 TriggerServerEvent('esx_vangelico_robbery:rob', k)
+										 PlaySoundFromCoord(soundid, "VEHICLES_HORNS_AMBULANCE_WARNING", pos2.x, pos2.y, pos2.z)
+									else 
+										exports.pNotify:SendNotification({text = "برو کیف بیار بابا، مگه فیلم هندیه؟!", type = "error", timeout = 4000})
+										Wait(4500)
+									end
+								elseif canRob == 'no_cops' then
+									exports.pNotify:SendNotification({text = "تعداد پلیس ها کم می باشد!", type = "error", timeout = 4000})
+									Wait(4500)
+								else
+									exports.pNotify:SendNotification({text = "دیر رسیدی، اینجا خالی شده!", type = "info", timeout = 4000})
 									Wait(4500)
 								end
-							elseif canRob == 'no_cops' then
-								exports.pNotify:SendNotification({text = "تعداد پلیس ها کم می باشد!", type = "error", timeout = 4000})
-                                Wait(4500)
-                            else
-								exports.pNotify:SendNotification({text = "دیر رسیدی، اینجا خالی شده!", type = "info", timeout = 4000})
-                                Wait(4500)
-                            end
-                        end
-					elseif(Vdist(pos.x, pos.y, pos.z, pos2.x, pos2.y, pos2.z) > 1.0)then
-						incircle = false
-					end		
-				end
-			end
-		end
-
-		if holdingup then
-			drawTxt(0.3, 1.4, 0.45, _U('smash_case') .. ' :~r~ ' .. vetrineRotte .. '/' .. Config.MaxWindows, 185, 185, 185, 255)
-
-			for i,v in pairs(vetrine) do 
-				if(GetDistanceBetweenCoords(pos, v.x, v.y, v.z, true) < 10.0) and not v.isOpen and Config.EnableMarker then 
-					DrawMarker(20, v.x, v.y, v.z, 0, 0, 0, 0, 0, 0, 0.6, 0.6, 0.6, 0, 255, 0, 200, 1, 1, 0, 0)
-				end
-				if(GetDistanceBetweenCoords(pos, v.x, v.y, v.z, true) < 0.75) and not v.isOpen then 
-					DrawText3D(v.x, v.y, v.z, '~w~[~g~E~w~] ' .. _U('press_to_collect'), 0.6)
-					if IsControlJustPressed(0, 38) then
-					
-						animazione = true
-						
-
-					    SetEntityCoords(GetPlayerPed(-1), v.x, v.y, v.z-0.95)
-					    SetEntityHeading(GetPlayerPed(-1), v.heading)
-						v.isOpen = true 
-						PlaySoundFromCoord(-1, "Glass_Smash", v.x, v.y, v.z, "", 0, 0, 0)
-					    if not HasNamedPtfxAssetLoaded("scr_jewelheist") then
-					    RequestNamedPtfxAsset("scr_jewelheist")
-					    end
-					    while not HasNamedPtfxAssetLoaded("scr_jewelheist") do
-					    Citizen.Wait(0)
-					    end
-					    SetPtfxAssetNextCall("scr_jewelheist")
-					    StartParticleFxLoopedAtCoord("scr_jewel_cab_smash", v.x, v.y, v.z, 0.0, 0.0, 0.0, 1.0, false, false, false, false)
-					    loadAnimDict( "missheist_jewel" ) 
-						TaskPlayAnim(GetPlayerPed(-1), "missheist_jewel", "smash_case", 8.0, 1.0, -1, 2, 0, 0, 0, 0 ) 
-						exports.pNotify:SendNotification({text = "برداشتن جواهر ...", type = "info", timeout = 4500})
-					    Citizen.Wait(5000)
-					    ClearPedTasksImmediately(GetPlayerPed(-1))
-					    PlaySound(-1, "PICK_UP", "HUD_FRONTEND_DEFAULT_SOUNDSET", 0, 0, 1)
-					    vetrineRotte = vetrineRotte+1
-					    animazione = false
-
-						if vetrineRotte == Config.MaxWindows then 
-						    for i,v in pairs(vetrine) do 
-								v.isOpen = false
-								vetrineRotte = 0
 							end
-							TriggerServerEvent('esx_vangelico_robbery:endrob', store)
-						    holdingup = false
-						    StopSound(soundid)
-						end
+						elseif(Vdist(pos.x, pos.y, pos.z, pos2.x, pos2.y, pos2.z) > 1.0)then
+							incircle = false
+						end		
 					end
-				end	
+				end
 			end
 
-			local pos2 = Stores[store].position
-			if (GetDistanceBetweenCoords(GetEntityCoords(GetPlayerPed(-1)), -622.566, -230.183, 38.057, true) > 11.5 ) then
-				TriggerServerEvent('esx_vangelico_robbery:toofar', store)
-				holdingup = false
+			if holdingup then
+				drawTxt(0.3, 1.4, 0.45, _U('smash_case') .. ' :~r~ ' .. vetrineRotte .. '/' .. Config.MaxWindows, 185, 185, 185, 255)
+
 				for i,v in pairs(vetrine) do 
-					v.isOpen = false
-					vetrineRotte = 0
+					if(GetDistanceBetweenCoords(pos, v.x, v.y, v.z, true) < 10.0) and not v.isOpen and Config.EnableMarker then 
+						DrawMarker(20, v.x, v.y, v.z, 0, 0, 0, 0, 0, 0, 0.6, 0.6, 0.6, 0, 255, 0, 200, 1, 1, 0, 0)
+					end
+					if(GetDistanceBetweenCoords(pos, v.x, v.y, v.z, true) < 0.75) and not v.isOpen then 
+						DrawText3D(v.x, v.y, v.z, '~w~[~g~E~w~] ' .. _U('press_to_collect'), 0.6)
+						if IsControlJustPressed(0, 38) then
+						
+							animazione = true
+							
+
+							SetEntityCoords(GetPlayerPed(-1), v.x, v.y, v.z-0.95)
+							SetEntityHeading(GetPlayerPed(-1), v.heading)
+							v.isOpen = true 
+							PlaySoundFromCoord(-1, "Glass_Smash", v.x, v.y, v.z, "", 0, 0, 0)
+							if not HasNamedPtfxAssetLoaded("scr_jewelheist") then
+							RequestNamedPtfxAsset("scr_jewelheist")
+							end
+							while not HasNamedPtfxAssetLoaded("scr_jewelheist") do
+							Citizen.Wait(0)
+							end
+							SetPtfxAssetNextCall("scr_jewelheist")
+							StartParticleFxLoopedAtCoord("scr_jewel_cab_smash", v.x, v.y, v.z, 0.0, 0.0, 0.0, 1.0, false, false, false, false)
+							loadAnimDict("missheist_jewel") 
+							TaskPlayAnim(GetPlayerPed(-1), "missheist_jewel", "smash_case", 8.0, 1.0, -1, 2, 0, 0, 0, 0 ) 
+							exports.pNotify:SendNotification({text = "برداشتن جواهر ...", type = "info", timeout = 4500})
+							Citizen.Wait(5000)
+							ClearPedTasksImmediately(GetPlayerPed(-1))
+							PlaySound(-1, "PICK_UP", "HUD_FRONTEND_DEFAULT_SOUNDSET", 0, 0, 1)
+							vetrineRotte = vetrineRotte+1
+							animazione = false
+
+							if vetrineRotte == Config.MaxWindows then 
+								for i,v in pairs(vetrine) do 
+									v.isOpen = false
+									vetrineRotte = 0
+								end
+								TriggerServerEvent('esx_vangelico_robbery:endrob', store)
+								holdingup = false
+								StopSound(soundid)
+							end
+						end
+					end	
 				end
-				StopSound(soundid)
+
+				local pos2 = Stores[store].position
+				if (GetDistanceBetweenCoords(GetEntityCoords(GetPlayerPed(-1)), -622.566, -230.183, 38.057, true) > 11.5 ) then
+					TriggerServerEvent('esx_vangelico_robbery:toofar', store)
+					holdingup = false
+					for i,v in pairs(vetrine) do 
+						v.isOpen = false
+						vetrineRotte = 0
+					end
+					StopSound(soundid)
+				end
 			end
+			Citizen.Wait(0)
+		else
+			Citizen.Wait(10000)
 		end
-		Citizen.Wait(0)
+		
 	end
 end)
 
