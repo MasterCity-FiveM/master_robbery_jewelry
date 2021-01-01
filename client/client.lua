@@ -132,7 +132,7 @@ end)
 
 Citizen.CreateThread(function()
 	while true do
-		if not (ESX ~= nil and ESX.PlayerData ~= nil and ESX.PlayerData.job ~= nil and ESX.PlayerData.job.name ~= nil and ESX.PlayerData.job.name == 'police') then
+		if ESX == nil or ESX.PlayerData == nil or ESX.PlayerData.job == nil or ESX.PlayerData.job.name == nil or (ESX.PlayerData.job.name ~= 'police' and ESX.PlayerData.job.name ~= 'sheriff') then
 			local pos = GetEntityCoords(GetPlayerPed(-1), true)
 
 			for k,v in pairs(Stores) do
