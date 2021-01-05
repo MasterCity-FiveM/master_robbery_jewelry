@@ -1,6 +1,7 @@
 local holdingup = false
 local store = ""
 local vetrineRotte = 0 
+local isDead = false
 
 local vetrine = {
 	{x = 147.085, y = -1048.612, z = 29.346, heading = 70.326, isOpen = false},--
@@ -134,11 +135,13 @@ Citizen.CreateThread(function()
 	while true do
 		if ESX == nil or ESX.PlayerData == nil or ESX.PlayerData.job == nil or ESX.PlayerData.job.name == nil or (ESX.PlayerData.job.name ~= 'police' and ESX.PlayerData.job.name ~= 'sheriff') then
 			local pos = GetEntityCoords(GetPlayerPed(-1), true)
-
+			local letSleep = true
+			
 			for k,v in pairs(Stores) do
 				local pos2 = v.position
 
 				if(Vdist(pos.x, pos.y, pos.z, pos2.x, pos2.y, pos2.z) < 15.0)then
+					letSleep = false
 					if not holdingup then
 						DrawMarker(27, v.position.x, v.position.y, v.position.z-0.9, 0, 0, 0, 0, 0, 0, 2.001, 2.0001, 0.5001, 255, 0, 0, 200, 0, 0, 0, 0)
 
@@ -196,6 +199,7 @@ Citizen.CreateThread(function()
 			end
 
 			if holdingup then
+				letSleep = false
 				drawTxt(0.3, 1.4, 0.45, _U('smash_case') .. ' :~r~ ' .. vetrineRotte .. '/' .. Config.MaxWindows, 185, 185, 185, 255)
 
 				for i,v in pairs(vetrine) do 
@@ -205,20 +209,21 @@ Citizen.CreateThread(function()
 					if(GetDistanceBetweenCoords(pos, v.x, v.y, v.z, true) < 0.75) and not v.isOpen then 
 						DrawText3D(v.x, v.y, v.z, '~w~[~g~E~w~] ' .. _U('press_to_collect'), 0.6)
 						if IsControlJustPressed(0, 38) then
-						
 							animazione = true
-							
 
 							SetEntityCoords(GetPlayerPed(-1), v.x, v.y, v.z-0.95)
 							SetEntityHeading(GetPlayerPed(-1), v.heading)
 							v.isOpen = true 
 							PlaySoundFromCoord(-1, "Glass_Smash", v.x, v.y, v.z, "", 0, 0, 0)
+							
 							if not HasNamedPtfxAssetLoaded("scr_jewelheist") then
-							RequestNamedPtfxAsset("scr_jewelheist")
+								RequestNamedPtfxAsset("scr_jewelheist")
 							end
+							
 							while not HasNamedPtfxAssetLoaded("scr_jewelheist") do
-							Citizen.Wait(0)
+								Citizen.Wait(0)
 							end
+							
 							SetPtfxAssetNextCall("scr_jewelheist")
 							StartParticleFxLoopedAtCoord("scr_jewel_cab_smash", v.x, v.y, v.z, 0.0, 0.0, 0.0, 1.0, false, false, false, false)
 							loadAnimDict("missheist_jewel") 
@@ -244,7 +249,7 @@ Citizen.CreateThread(function()
 				end
 
 				local pos2 = Stores[store].position
-				if (GetDistanceBetweenCoords(GetEntityCoords(GetPlayerPed(-1)), -622.566, -230.183, 38.057, true) > 11.5 ) then
+				if isDead or (GetDistanceBetweenCoords(GetEntityCoords(GetPlayerPed(-1)), -622.566, -230.183, 38.057, true) > 11.5 ) then
 					TriggerServerEvent('master_robbery_jewelry:toofar', store)
 					holdingup = false
 					for i,v in pairs(vetrine) do 
@@ -254,11 +259,20 @@ Citizen.CreateThread(function()
 					StopSound(soundid)
 				end
 			end
-			Citizen.Wait(0)
+			
+			if letSleep then
+				Citizen.Wait(2000)
+			else
+				Citizen.Wait(0)
+			end
 		else
 			Citizen.Wait(10000)
 		end
 		
 	end
+end)
+
+AddEventHandler('esx:onPlayerDeath', function(data)
+	isDead = true
 end)
 
