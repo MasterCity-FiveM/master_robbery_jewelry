@@ -1,5 +1,6 @@
 local rob = false
 ESX = nil
+local RobberID = 0
 
 TriggerEvent('esx:getSharedObject', function(obj) ESX = obj end)
 
@@ -27,7 +28,7 @@ AddEventHandler('master_robbery_jewelry:toofar', function(robb)
 	local source = source
 	local xPlayers = ESX.GetPlayers()
 	rob = false
-	
+	RobberID = 0
 	TriggerClientEvent('master_robbery_jewelry:msgPolice', source, 'cancel')
 	TriggerClientEvent('master_robbery_jewelry:robberycomplete', source)
 end)
@@ -36,6 +37,7 @@ RegisterServerEvent('master_robbery_jewelry:endrob')
 AddEventHandler('master_robbery_jewelry:endrob', function(robb)
 	local source = source
 	local xPlayer = ESX.GetPlayerFromId(source)
+	RobberID = 0
 	xPlayer.addInventoryItem('jewels', math.random(Config.MinJewels, Config.MaxJewels))
 	TriggerClientEvent("pNotify:SendNotification", source, { text = "سرقت شما به پایان رسید، تا دزدیی دیگر خدانگهدار!", type = "success", timeout = 4000, layout = "bottomCenter"})
 	TriggerClientEvent('master_robbery_jewelry:robberycomplete', source)
@@ -56,11 +58,19 @@ AddEventHandler('master_robbery_jewelry:rob', function(robb)
 
 		if rob == false then
 			rob = true
+			RobberID = source
 			TriggerClientEvent('master_robbery_jewelry:msgPolice', source, 'start')
 			TriggerClientEvent("pNotify:SendNotification", source, { text = "دزدگیر فعال شد!", type = "error", timeout = 4000, layout = "bottomCenter"})
 			TriggerClientEvent('master_robbery_jewelry:currentlyrobbing', source, robb)
             --CancelEvent()
 			Stores[robb].lastrobbed = os.time()
 		end
+	end
+end)
+
+AddEventHandler('esx:playerDropped', function(playerId, reason)
+	if source == RobberID then
+		rob = false
+		RobberID = 0
 	end
 end)

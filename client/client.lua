@@ -275,4 +275,3 @@ end)
 AddEventHandler('esx:onPlayerDeath', function(data)
 	isDead = true
 end)
-
