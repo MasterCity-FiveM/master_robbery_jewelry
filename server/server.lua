@@ -8,6 +8,14 @@ function get3DDistance(x1, y1, z1, x2, y2, z2)
 	return math.sqrt(math.pow(x1 - x2, 2) + math.pow(y1 - y2, 2) + math.pow(z1 - z2, 2))
 end
 
+ESX.RegisterServerCallback('master_robbery_jewelry:get_times', function(cb)
+	local status = 0
+	if (os.time() - Stores["jewelry"].lastrobbed) < Config.SecBetwNextRob and Stores["jewelry"].lastrobbed ~= 0 then
+		status = Config.SecBetwNextRob - (os.time() - Stores["jewelry"].lastrobbed)
+	end
+	cb(status)
+end)
+
 ESX.RegisterServerCallback('master_robbery_jewelry:canRob', function(source, cb, store)
     local cops = 0
 	TriggerEvent('esx_service:GetServiceCount',  function(cops)
