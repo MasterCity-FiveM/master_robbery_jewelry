@@ -9,6 +9,7 @@ function get3DDistance(x1, y1, z1, x2, y2, z2)
 end
 
 ESX.RegisterServerCallback('master_robbery_jewelry:get_times', function(cb)
+	ESX.RunCustomFunction("anti_ddos", source, 'master_robbery_jewelry:get_times', {})
 	local status = 0
 	if (os.time() - Stores["jewelry"].lastrobbed) < Config.SecBetwNextRob and Stores["jewelry"].lastrobbed ~= 0 then
 		status = Config.SecBetwNextRob - (os.time() - Stores["jewelry"].lastrobbed)
@@ -17,6 +18,7 @@ ESX.RegisterServerCallback('master_robbery_jewelry:get_times', function(cb)
 end)
 
 ESX.RegisterServerCallback('master_robbery_jewelry:canRob', function(source, cb, store)
+	ESX.RunCustomFunction("anti_ddos", source, 'master_robbery_jewelry:canRob', {store = store})
     local cops = 0
 	TriggerEvent('esx_service:GetServiceCount',  function(cops)
 		if cops >= Stores[store].cops then
@@ -33,6 +35,7 @@ end)
 
 RegisterServerEvent('master_robbery_jewelry:toofar')
 AddEventHandler('master_robbery_jewelry:toofar', function(robb)
+	ESX.RunCustomFunction("anti_ddos", source, 'master_robbery_jewelry:toofar', {robb = robb})
 	local source = source
 	local xPlayers = ESX.GetPlayers()
 	rob = false
@@ -43,6 +46,7 @@ end)
 
 RegisterServerEvent('master_robbery_jewelry:endrob')
 AddEventHandler('master_robbery_jewelry:endrob', function(robb)
+	ESX.RunCustomFunction("anti_ddos", source, 'master_robbery_jewelry:endrob', {robb = robb})
 	local source = source
 	local xPlayer = ESX.GetPlayerFromId(source)
 	RobberID = 0
@@ -53,6 +57,7 @@ end)
 
 RegisterServerEvent('master_robbery_jewelry:rob')
 AddEventHandler('master_robbery_jewelry:rob', function(robb)
+	ESX.RunCustomFunction("anti_ddos", source, 'master_robbery_jewelry:rob', {robb = robb})
 	local source = source
 	local xPlayer = ESX.GetPlayerFromId(source)
 	
@@ -67,6 +72,7 @@ AddEventHandler('master_robbery_jewelry:rob', function(robb)
 		if rob == false then
 			rob = true
 			RobberID = source
+			ESX.RunCustomFunction("discord", source, 'robstart', 'Jewelry Robbery', "")
 			TriggerClientEvent('master_robbery_jewelry:msgPolice', source, 'start')
 			TriggerClientEvent("pNotify:SendNotification", source, { text = "دزدگیر فعال شد!", type = "error", timeout = 4000, layout = "bottomCenter"})
 			TriggerClientEvent('master_robbery_jewelry:currentlyrobbing', source, robb)
