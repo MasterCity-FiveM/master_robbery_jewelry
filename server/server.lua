@@ -9,7 +9,7 @@ function get3DDistance(x1, y1, z1, x2, y2, z2)
 end
 
 ESX.RegisterServerCallback('master_robbery_jewelry:get_times', function(cb)
-	ESX.RunCustomFunction("anti_ddos", source, 'master_robbery_jewelry:get_times', {})
+	-- ESX.RunCustomFunction("anti_ddos", source, 'master_robbery_jewelry:get_times', {})
 	local status = 0
 	if (os.time() - Stores["jewelry"].lastrobbed) < Config.SecBetwNextRob and Stores["jewelry"].lastrobbed ~= 0 then
 		status = Config.SecBetwNextRob - (os.time() - Stores["jewelry"].lastrobbed)
