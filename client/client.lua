@@ -40,6 +40,15 @@ Citizen.CreateThread(function()
 	end
 
 	ESX.PlayerData = ESX.GetPlayerData()
+	
+	local blip = AddBlipForCoord(-629.99, -236.542, 38.05)
+	SetBlipSprite(blip, 439)
+	SetBlipScale(blip, 0.8)
+	SetBlipColour(blip, 46)
+	SetBlipAsShortRange(blip, true)
+	BeginTextCommandSetBlipName("STRING")
+	AddTextComponentString('Javaheri')
+	EndTextCommandSetBlipName(blip)
 end)
 
 RegisterNetEvent('esx:setJob')
