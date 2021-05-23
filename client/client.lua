@@ -174,7 +174,7 @@ Citizen.CreateThread(function()
 									local hasBag = nil
 									
 									TriggerEvent('skinchanger:getSkin', function(skin)
-										if skin['bags_1'] ~= nil and (skin['bags_1'] >= 40 and skin['bags_1'] <= 47) then
+										if skin['bags_1'] ~= nil and (skin['bags_1'] == 85 or skin['bags_1'] == 86 or skin['bags_1'] == 82 or skin['bags_1'] == 81 or skin['bags_1'] == 45 or skin['bags_1'] == 41 or skin['bags_1'] == 40) then
 											hasBag = true
 										else
 											hasBag = false
