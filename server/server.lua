@@ -47,6 +47,16 @@ end)
 RegisterServerEvent('master_robbery_jewelry:endrob')
 AddEventHandler('master_robbery_jewelry:endrob', function(robb)
 	ESX.RunCustomFunction("anti_ddos", source, 'master_robbery_jewelry:endrob', {robb = robb})
+	if Stores[robb] then
+		local store = Stores[robb]
+
+		if store.lastrobbed == 0 or os.time() < store.lastrobbed + 120 then
+			return
+		end
+	else
+		return
+	end
+	
 	local source = source
 	local xPlayer = ESX.GetPlayerFromId(source)
 	RobberID = 0
