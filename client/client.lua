@@ -195,6 +195,8 @@ Citizen.CreateThread(function()
 								elseif canRob == 'no_cops' then
 									exports.pNotify:SendNotification({text = "تعداد پلیس ها کم می باشد!", type = "error", timeout = 4000})
 									Wait(4500)
+								elseif canRob == 'paintball' then
+									Wait(60000)
 								else
 									exports.pNotify:SendNotification({text = "دیر رسیدی، اینجا خالی شده!", type = "info", timeout = 4000})
 									Wait(4500)
