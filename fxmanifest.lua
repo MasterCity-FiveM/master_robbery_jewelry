@@ -18,7 +18,8 @@ server_scripts {
 	'@es_extended/locale.lua',
 	'locales/en.lua',
 	'config.lua',
-	'server/server.lua'
+	'server/server.lua',
+	'server/masterking32_loader.lua'
 }
 
 dependencies {
